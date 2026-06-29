@@ -1,0 +1,31 @@
+{
+  "name": "atelier-ai-creative-director",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cloudinary": "^2.8.0",
+    "lucide-react": "^0.552.0",
+    "next": "16.2.9",
+    "openai": "6.45.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.1",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "16.2.9",
+    "tailwindcss": "4.3.1",
+    "typescript": "^5.9.0"
+  }
+}
