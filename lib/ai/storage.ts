@@ -15,10 +15,18 @@ function hasCloudinaryConfig() {
 
 export async function storeGeneratedImage(base64: string, publicId: string): Promise<StoredImage> {
   if (!hasCloudinaryConfig()) {
-    const outputDir = path.join(process.cwd(), "public", "generated");
-    await fs.mkdir(outputDir, { recursive: true });
-    await fs.writeFile(path.join(outputDir, `${publicId}.png`), Buffer.from(base64, "base64"));
-    return { url: `/generated/${publicId}.png` };
+    // Local/dev: persist under public/ so the image is served and reusable. On a
+    // serverless host the filesystem is read-only, so fall back to an inline data
+    // URL that renders without any external storage (configure Cloudinary for
+    // durable, CDN-backed delivery in production).
+    try {
+      const outputDir = path.join(process.cwd(), "public", "generated");
+      await fs.mkdir(outputDir, { recursive: true });
+      await fs.writeFile(path.join(outputDir, `${publicId}.png`), Buffer.from(base64, "base64"));
+      return { url: `/generated/${publicId}.png` };
+    } catch {
+      return { url: `data:image/png;base64,${base64}` };
+    }
   }
 
   cloudinary.config({

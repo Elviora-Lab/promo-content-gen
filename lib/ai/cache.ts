@@ -1,10 +1,16 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { z } from "zod";
 
-const CACHE_ROOT = path.join(process.cwd(), ".cache", "atelier");
+// Serverless platforms (Vercel/AWS Lambda) expose a read-only filesystem except
+// for the OS temp dir, so route the cache there instead of the project directory.
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const CACHE_ROOT = isServerless
+  ? path.join(os.tmpdir(), "atelier-cache")
+  : path.join(process.cwd(), ".cache", "atelier");
 
 export function hashParts(...parts: Array<string | Buffer>) {
   const hash = createHash("sha256");
@@ -37,8 +43,14 @@ export async function readJsonCache<T>(stage: string, key: string, schema: z.Zod
 }
 
 export async function writeJsonCache(stage: string, key: string, value: unknown) {
-  const dir = await ensureDir(stage);
-  await fs.writeFile(path.join(dir, `${key}.json`), JSON.stringify(value, null, 2), "utf8");
+  // Caching is a best-effort optimization; never let a read-only/full filesystem
+  // break the generation pipeline.
+  try {
+    const dir = await ensureDir(stage);
+    await fs.writeFile(path.join(dir, `${key}.json`), JSON.stringify(value, null, 2), "utf8");
+  } catch (error) {
+    console.warn(`Skipping ${stage} cache write:`, error instanceof Error ? error.message : error);
+  }
 }
 
 export async function fileExists(filePath: string) {
